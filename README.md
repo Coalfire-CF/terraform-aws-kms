@@ -51,14 +51,52 @@ terraform {
 
 module "kms" {
   source                    = "github.com/Coalfire-CF/ACE-AWS-KMS?ref=vX.X.X"
-  create_s3_key = true
-  create_ecr_key = true
-  create_ebs_key = true
-  create_kms_key = true
-  create_sm_key = true
-  create_k8s_key = false
-  create_lambda_key true 
+  resource_prefix = var.resource_prefix
+  kms_key_resource_type = "s3"
+  key policy = data.aws_iam_policy_document.s3_kms_policy.json
 }
+
+data "aws_iam_policy_document" "s3_kms_policy" {
+  statement {
+    sid       = "source-account-full-access"
+    effect    = "Allow"
+    actions   = ["kms:*"]
+    resources = ["*"]
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${var.mgmt_account_id}:root"]
+    }
+  }
+  statement {
+    sid    = "target-account-allow-grant"
+    effect = "Allow"
+    # the following actions are required by Terraform to read/create/remove grants
+    actions = [
+      "kms:CreateGrant",
+      "kms:DescribeKey",
+      "kms:ListGrants",
+      "kms:RevokeGrant"
+    ]
+    resources = ["*"]
+    # This allows any IAM role in the target account that has permission to create the grant to create the grant.
+    # Can lock this down to a specific account in the target account so only that role is able to create grant for this key
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${var.app_account_id}:root"]
+    }
+  }
+       
+  # Resources
+  resource "aws_kms_grant" "cross-account-grant" {
+  name              = "grant-s3-kms-key"
+  key_id            = module.kms.arn # key above that was deployed
+  grantee_principal = data.aws_iam_role.my_role.arn #cross-account role you want to grant to 
+  operations        = ["Encrypt", "Decrypt", "GenerateDataKey"]
+}
+        
+}
+
+
 ```
 
 <!-- BEGIN_TF_DOCS -->
