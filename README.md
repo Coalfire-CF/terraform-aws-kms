@@ -3,15 +3,11 @@
 
 </div>
 
-# Coalfire pak README Template
-
-## Repository Title
-
-Include the name of the Repository as the header above e.g. `ACE-Cloud-Service`
+## ACE-AWS-KMS
 
 ## Dependencies
 
-List any dependencies here. E.g. security-core, region-setup
+Any resources requiring KMS keys
 
 ## Resource List
 
