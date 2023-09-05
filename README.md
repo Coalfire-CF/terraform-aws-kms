@@ -121,13 +121,10 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_account_number"></a> [account\_number](#input\_account\_number) | n/a | `any` | n/a | yes |
-| <a name="input_application_account_numbers"></a> [application\_account\_numbers](#input\_application\_account\_numbers) | n/a | `any` | n/a | yes |
-| <a name="input_default_aws_region"></a> [default\_aws\_region](#input\_default\_aws\_region) | n/a | `any` | n/a | yes |
 | <a name="input_key_policy"></a> [key\_policy](#input\_key\_policy) | IAM key policy for the kms key | `any` | n/a | yes |
-| <a name="input_kms_key_resource_type"></a> [kms\_key\_resource\_type](#input\_kms\_key\_resource\_type) | the type of resource/service this key is for, such as S3, EBS or RDS | `any` | n/a | yes |
-| <a name="input_partition"></a> [partition](#input\_partition) | n/a | `any` | n/a | yes |
-| <a name="input_resource_prefix"></a> [resource\_prefix](#input\_resource\_prefix) | n/a | `any` | n/a | yes |
+| <a name="input_kms_key_resource_type"></a> [kms\_key\_resource\_type](#input\_kms\_key\_resource\_type) | the type of resource/service this key is for, such as S3, EBS or RDS | `string` | n/a | yes |
+| <a name="input_resource_prefix"></a> [resource\_prefix](#input\_resource\_prefix) | The prefix for the KMS key alias | `string` | n/a | yes |
+| <a name="input_key_description"></a> [key_description](#input\_key_description) | This overwrites the default generated description for the KMS key. | `string` | n/a | no |
 
 ## Outputs
 
