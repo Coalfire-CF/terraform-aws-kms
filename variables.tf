@@ -7,13 +7,13 @@ variable "kms_key_resource_type" {
   type        = string
 }
 
+variable "resource_prefix" {
+  description = "The prefix of the KMS key alias"
+  type        = string
+}
+
 variable "key_description" {
   description = "The description given to the created CMK"
   type        = string
   default     = ""
-}
-
-variable "resource_prefix" {
-  description = "The prefix of the KMS Key Alias"
-  type        = string
 }
