@@ -7,18 +7,14 @@
 
 ## Dependencies
 
-Any resources requiring KMS keys
+Any resources requiring KMS keys - IAM policy must be created upon key creation. 
 
 ## Resource List
 
 Insert a high-level list of resources created as a part of this module. E.g.
 
-- Storage Account
-- Containers
-- Storage share
-- Lifecycle policy
-- CMK key and Iam Role Assignment
-- Monitor diagnostic setting
+- KMS Key
+- KMS Key alias
 
 ## Code Updates
 
@@ -44,14 +40,15 @@ terraform {
     }
   }
 }
-
+#this can be called in region setup
 module "kms" {
   source                    = "github.com/Coalfire-CF/ACE-AWS-KMS?ref=vX.X.X"
   resource_prefix = var.resource_prefix
   kms_key_resource_type = "s3"
-  key policy = data.aws_iam_policy_document.s3_kms_policy.json
+  key_policy = data.aws_iam_policy_document.s3_kms_policy.json
 }
 
+#this should be created where the module is called within the project. such as in region-setup or account setup if desired.
 data "aws_iam_policy_document" "s3_kms_policy" {
   statement {
     sid       = "source-account-full-access"
@@ -82,11 +79,11 @@ data "aws_iam_policy_document" "s3_kms_policy" {
     }
   }
        
-  # Resources
+  # Resource to be called where KMS access is required by a resource/service deployment
   resource "aws_kms_grant" "cross-account-grant" {
   name              = "grant-s3-kms-key"
   key_id            = module.kms.arn # key above that was deployed
-  grantee_principal = data.aws_iam_role.my_role.arn #cross-account role you want to grant to 
+  grantee_principal = data.aws_iam_role.my_role.arn #cross-account role or resource/service role you want to grant to 
   operations        = ["Encrypt", "Decrypt", "GenerateDataKey"]
 }
         
