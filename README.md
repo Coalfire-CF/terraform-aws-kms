@@ -95,13 +95,16 @@ data "aws_iam_policy_document" "s3_kms_policy" {
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
-No requirements.
+| Name | Version |
+|------|---------|
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.5 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.1 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.1 |
 
 ## Modules
 
@@ -118,13 +121,10 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_account_number"></a> [account\_number](#input\_account\_number) | n/a | `any` | n/a | yes |
-| <a name="input_application_account_numbers"></a> [application\_account\_numbers](#input\_application\_account\_numbers) | n/a | `any` | n/a | yes |
-| <a name="input_default_aws_region"></a> [default\_aws\_region](#input\_default\_aws\_region) | n/a | `any` | n/a | yes |
+| <a name="input_key_description"></a> [key\_description](#input\_key\_description) | The description given to the created CMK | `string` | `""` | no |
 | <a name="input_key_policy"></a> [key\_policy](#input\_key\_policy) | IAM key policy for the kms key | `any` | n/a | yes |
-| <a name="input_kms_key_resource_type"></a> [kms\_key\_resource\_type](#input\_kms\_key\_resource\_type) | the type of resource/service this key is for, such as S3, EBS or RDS | `any` | n/a | yes |
-| <a name="input_partition"></a> [partition](#input\_partition) | n/a | `any` | n/a | yes |
-| <a name="input_resource_prefix"></a> [resource\_prefix](#input\_resource\_prefix) | n/a | `any` | n/a | yes |
+| <a name="input_kms_key_resource_type"></a> [kms\_key\_resource\_type](#input\_kms\_key\_resource\_type) | the type of resource/service this key is for, such as S3, EBS or RDS | `string` | n/a | yes |
+| <a name="input_resource_prefix"></a> [resource\_prefix](#input\_resource\_prefix) | The prefix of the KMS key alias | `string` | n/a | yes |
 
 ## Outputs
 
