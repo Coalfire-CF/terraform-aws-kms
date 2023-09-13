@@ -1,5 +1,6 @@
 variable "key_policy" {
   description = "IAM key policy for the kms key"
+  default = null
 }
 
 variable "kms_key_resource_type" {
