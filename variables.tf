@@ -4,7 +4,7 @@ variable "key_policy" {
 }
 
 variable "kms_key_resource_type" {
-  description = "the type of resource/service this key is for, such as S3, EBS or RDS"
+  description = "The type of resource/service this key is for, such as S3, EBS or RDS"
   type        = string
 }
 
