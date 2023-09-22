@@ -3,82 +3,27 @@
 
 </div>
 
-# Coalfire pak README Template
-
-## Repository Title
-
-Include the name of the Repository as the header above e.g. `ACE-Cloud-Service`
+## ACE-AWS-KMS
 
 ## Dependencies
 
-List any dependencies here. E.g. security-core, region-setup
+Any resources requiring KMS keys - IAM policy must be created upon key creation. 
 
 ## Resource List
 
 Insert a high-level list of resources created as a part of this module. E.g.
 
-- Storage Account
-- Containers
-- Storage share
-- Lifecycle policy
-- CMK key and Iam Role Assignment
-- Monitor diagnostic setting
+- KMS Key
+- KMS Key alias
 
 ## Code Updates
-
-If applicable, add here. For example, updating variables, updating `tstate.tf`, or remote data sources.
-
-`tstate.tf` Update to the appropriate version and storage accounts, see sample
-
-``` hcl
-terraform {
-  required_version = ">= 1.1.7"
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 3.45.0"
-    }
-  }
-  backend "azurerm" {
-    resource_group_name  = "prod-mp-core-rg"
-    storage_account_name = "prodmpsatfstate"
-    container_name       = "tfstatecontainer"
-    environment          = "usgovernment"
-    key                  = "ad.tfstate"
-  }
-}
-```
-
-Change directory to the `active-directory` folder
-
-Run `terraform init` to download modules and create initial local state file.
-
-Run `terraform plan` to ensure no errors and validate plan is deploying expected resources.
-
-Run `terraform apply` to deploy infrastructure.
-
-Update the `remote-data.tf` file to add the security state key
-
-``` hcl
-
-data "terraform_remote_state" "usgv-ad" {
-  backend = "azurerm"
-  config = {
-    storage_account_name = "${local.storage_name_prefix}satfstate"
-    resource_group_name  = "${local.resource_prefix}-core-rg"
-    container_name       = "${var.location_abbreviation}${var.app_abbreviation}tfstatecontainer"
-    environment          = var.az_environment
-    key                  = "${var.location_abbreviation}-ad.tfstate"
-  }
-}
-```
 
 ## Deployment Steps
 
 This module can be called as outlined below.
 
-- Change directories to the `reponame` directory.
-- From the `terraform/azure/reponame` directory run `terraform init`.
+- Change directories to the `kms` directory.
+- From the `terraform/aws/kms` directory run `terraform init`.
 - Run `terraform plan` to review the resources being created.
 - If everything looks correct in the plan output, run `terraform apply`.
 
@@ -87,79 +32,106 @@ This module can be called as outlined below.
 Include example for how to call the module below with generic variables
 
 ```hcl
-provider "azurerm" {
-  features {}
+terraform {
+  required_providers {
+    aws = {
+      source = "hashicorp/aws"
+      version = "=4.58"
+    }
+  }
+}
+#this can be called in region setup
+module "kms" {
+  source                    = "github.com/Coalfire-CF/ACE-AWS-KMS?ref=vX.X.X"
+  resource_prefix = var.resource_prefix
+  kms_key_resource_type = "s3"
+  key_policy = data.aws_iam_policy_document.s3_kms_policy.json
 }
 
-module "core_sa" {
-  source                    = "github.com/Coalfire-CF/ACE-Azure-StorageAccount?ref=vX.X.X"
-  name                       = "${replace(var.resource_prefix, "-", "")}tfstatesa"
-  resource_group_name        = azurerm_resource_group.management.name
-  location                   = var.location
-  account_kind               = "StorageV2"
-  ip_rules                   = var.ip_for_remote_access
-  diag_log_analytics_id      = azurerm_log_analytics_workspace.core-la.id
-  virtual_network_subnet_ids = var.fw_virtual_network_subnet_ids
-  tags                       = var.tags
-
-  #OPTIONAL
-  public_network_access_enabled = true
-  enable_customer_managed_key   = true
-  cmk_key_vault_id              = module.core_kv.id
-  cmk_key_vault_key_name        = azurerm_key_vault_key.tfstate-cmk.name
-  storage_containers = [
-    "tfstate"
-  ]
-  storage_shares = [
-    {
-      name = "test"
-      quota = 500
+#this should be created where the module is called within the project. such as in region-setup or account setup if desired.
+data "aws_iam_policy_document" "s3_kms_policy" {
+  statement {
+    sid       = "source-account-full-access"
+    effect    = "Allow"
+    actions   = ["kms:*"]
+    resources = ["*"]
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${var.mgmt_account_id}:root"]
     }
-  ]
-  lifecycle_policies = [
-    {
-      prefix_match = ["tfstate"]
-      version = {
-        delete_after_days_since_creation = 90
-      }
+  }
+  statement {
+    sid    = "target-account-allow-grant"
+    effect = "Allow"
+    # the following actions are required by Terraform to read/create/remove grants
+    actions = [
+      "kms:CreateGrant",
+      "kms:DescribeKey",
+      "kms:ListGrants",
+      "kms:RevokeGrant"
+    ]
+    resources = ["*"]
+    # This allows any IAM role in the target account that has permission to create the grant to create the grant.
+    # Can lock this down to a specific account in the target account so only that role is able to create grant for this key
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${var.app_account_id}:root"]
     }
-  ]
+  }
+       
+  # Resource to be called where KMS access is required by a resource/service deployment
+  resource "aws_kms_grant" "cross-account-grant" {
+  name              = "grant-s3-kms-key"
+  key_id            = module.kms.arn # key above that was deployed
+  grantee_principal = data.aws_iam_role.my_role.arn #cross-account role or resource/service role you want to grant to 
+  operations        = ["Encrypt", "Decrypt", "GenerateDataKey"]
 }
+        
+}
+
+
 ```
 
 <!-- BEGIN_TF_DOCS -->
-
-ALLOW TERRAFORM MARKDOWN GITHUB ACTION TO POPULATE THE BELOW
-
 ## Requirements
 
-No requirements.
+| Name | Version |
+|------|---------|
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.5 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | <~ 4.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
+| <a name="provider_aws"></a> [aws](#provider\_aws) | <~ 4.0 |
 
 ## Modules
 
-| Name | Source | Version |
-|------|--------|---------|
+No modules.
 
 ## Resources
 
 | Name | Type |
 |------|------|
+| [aws_kms_alias.kms_key_alias](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_alias) | resource |
+| [aws_kms_key.kms_key](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_key) | resource |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_key_description"></a> [key\_description](#input\_key\_description) | The description given to the created CMK | `string` | `""` | no |
+| <a name="input_key_policy"></a> [key\_policy](#input\_key\_policy) | IAM key policy for the kms key | `any` | `null` | no |
+| <a name="input_kms_key_resource_type"></a> [kms\_key\_resource\_type](#input\_kms\_key\_resource\_type) | The type of resource/service this key is for, such as S3, EBS or RDS | `string` | n/a | yes |
+| <a name="input_resource_prefix"></a> [resource\_prefix](#input\_resource\_prefix) | The prefix of the KMS key alias | `string` | n/a | yes |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-
+| <a name="output_kms_key_arn"></a> [kms\_key\_arn](#output\_kms\_key\_arn) | The arn of the s3 kms key |
+| <a name="output_kms_key_id"></a> [kms\_key\_id](#output\_kms\_key\_id) | The id of the s3 key |
 <!-- END_TF_DOCS -->
 
 ## Contributing
