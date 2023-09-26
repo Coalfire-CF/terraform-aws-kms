@@ -3,7 +3,12 @@
 
 </div>
 
-## ACE-AWS-KMS
+## AWS KMS Terraform Module
+
+## Description
+This module creates an AWS KMS Key as well as an alias for the key.
+
+FedRAMP Compliance: Moderate, High
 
 ## Dependencies
 
@@ -11,12 +16,8 @@ Any resources requiring KMS keys - IAM policy must be created upon key creation.
 
 ## Resource List
 
-Insert a high-level list of resources created as a part of this module. E.g.
-
 - KMS Key
 - KMS Key alias
-
-## Code Updates
 
 ## Deployment Steps
 
@@ -28,8 +29,6 @@ This module can be called as outlined below.
 - If everything looks correct in the plan output, run `terraform apply`.
 
 ## Usage
-
-Include example for how to call the module below with generic variables
 
 ```hcl
 terraform {
@@ -85,11 +84,8 @@ data "aws_iam_policy_document" "s3_kms_policy" {
   key_id            = module.kms.arn # key above that was deployed
   grantee_principal = data.aws_iam_role.my_role.arn #cross-account role or resource/service role you want to grant to 
   operations        = ["Encrypt", "Decrypt", "GenerateDataKey"]
+  }
 }
-        
-}
-
-
 ```
 
 <!-- BEGIN_TF_DOCS -->
