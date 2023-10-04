@@ -1,13 +1,17 @@
-<div align="center">
-<img src="coalfire_logo.png" width="200">
+![Coalfire](coalfire_logo.png)
 
-</div>
+# AWS KMS Terraform Module
 
-## ACE-AWS-KMS
+## Description
+
+This module creates the necessary resources to store your Terraform code remotely in AWS.
+
+FedRAMP Compliance: Moderate, High
 
 ## Dependencies
 
-Any resources requiring KMS keys - IAM policy must be created upon key creation. 
+- IAM AWS Accounts
+- Any resources requiring KMS keys - IAM policy must be created upon key creation. 
 
 ## Resource List
 
