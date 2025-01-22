@@ -1,6 +1,7 @@
 resource "aws_kms_key" "kms_key" {
   description         = local.cmk_description
   policy              = var.key_policy
+  multi_region        = var.multi_region
   enable_key_rotation = true
 }
 

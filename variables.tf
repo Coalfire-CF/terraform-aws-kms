@@ -18,3 +18,9 @@ variable "key_description" {
   type        = string
   default     = ""
 }
+
+variable "multi_region" {
+  description = "Indicates whether the KMS key is a multi-Region (true) or regional (false) key."
+  type        = bool
+  default     = false
+}
