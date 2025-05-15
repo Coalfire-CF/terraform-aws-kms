@@ -1,0 +1,4 @@
+module_name = "terraform-aws-s3"
+resource_prefix = "aws-native-architecture"
+region = "us-gov-west-1"
+kms_key_resource_type = "s3"
