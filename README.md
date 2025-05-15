@@ -1,100 +1,157 @@
 ![Coalfire](coalfire_logo.png)
 
-# AWS KMS Terraform Module
+
+# terraform-aws-kms
+
 
 ## Description
 
-This module creates the necessary resources to store your Terraform code remotely in AWS.
+This module creates AWS KMS keys and aliases for encrypting resources with full customization of key policies and automatic handling of AWS partitions. It supports both commercial and GovCloud environments and follows AWS security best practices, including automatic key rotation.
 
+The module supports various AWS services by allowing customization of the key purpose, tagging, and access policies. 
+
+Keys created by this module can be used for S3 buckets, EBS volumes, RDS databases, and other AWS services requiring encryption.
 FedRAMP Compliance: Moderate, High
+
+## Architecture
+
+[architecture diagram to come]
 
 ## Dependencies
 
-- IAM AWS Accounts
-- Any resources requiring KMS keys - IAM policy must be created upon key creation. 
+Internal Modules:
+No prerequsite modules are required to deploy this module
 
+AWS Provider 5.0+
+IAM permissions to create and manage KMS resources
+
+## Environment Setup
+
+Include the required steps to establish a secure connection to the specific cloud environment used for the build. 
+MUST CHANGE PER CLOUD ENVIRONMENT AWS Example:
+
+```hcl
+- Download and install the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+
+- Log into the AWS Console and [create AWS CLI Credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html)
+
+- Configure the named profile used for the project, such as `aws configure --profile example-mgmt`
+```
+
+## Tree
+```
+.
+├── CONTRIBUTING.md
+├── License.md
+├── README.md
+├── UpdatedReadMe.md
+├── coalfire_logo.png
+├── data.tf
+├── locals.tf
+├── main.tf
+├── outputs.tf
+├── providers.tf
+└── variables.tf
+```
 ## Resource List
 
-Insert a high-level list of resources created as a part of this module. E.g.
-
-- KMS Key
-- KMS Key alias
+AWS KMS Key with customizable policy and automatic key rotation
+AWS KMS Alias for easier key identification and management
+Automatic AWS partition detection for commercial and GovCloud environments
 
 ## Code Updates
 
-## Deployment Steps
+The module has been updated with the following improvements:
 
-This module can be called as outlined below.
+Automatic AWS partition detection for proper ARN construction when deploying key(s)
+Updated tagging to include provider default tags support
+Updated examples for common use cases
 
-- Change directories to the `kms` directory.
-- From the `terraform/aws/kms` directory run `terraform init`.
-- Run `terraform plan` to review the resources being created.
-- If everything looks correct in the plan output, run `terraform apply`.
+## Deployment
+
+This section should detail how an engineer with no previous experience with this PAK should go about deploying X resources and any key dependencies or deployment configurations that need to be well documented. 
+
+Example:
+
+1. Create a new directory for your KMS deployment:
+
+    ```hcl
+    mkdir -p terraform/kms
+    cd terraform/kms
+    ```
+
+2. Create a properly defined main.tf file via the template found under 'Usage' while adjusting tfvars as needed. Note that many provided variables are outputs from other modules. See example under 'usage'.
+
+   
+3. Initialize the Terraform working directory:
+   ```hcl
+   terraform init -backend-config=./backends/prefix.tfvars
+   ```
+   Create an execution plan and verify everything looks correct:
+   ```hcl
+   terraform plan
+   ```
+   Apply the configuration:
+   ```hcl
+   terraform apply -var-file=./tfvars/prefix.tfvars
+   ```
 
 ## Usage
 
-Include example for how to call the module below with generic variables
+Include an example for how to call the module below with generic variables. MUST CHANGE PER REPOSITORY example is shown with Azure module:
+
+
+
 
 ```hcl
-terraform {
-  required_providers {
-    aws = {
-      source = "hashicorp/aws"
-      version = "=4.58"
+
+data "aws_partition" "current" {}
+data "aws_caller_identity" "current" {}
+
+provider "aws" {
+  region = "us-gov-west-1"
+  default_tags {
+    tags = {
+      Application = "This is a test"
+      Owner       = "Koda Remenyi"
+      Team        = "AWS Native Architecture PAK Team"
+      Environment = "dev"
     }
   }
 }
-#this can be called in region setup
-module "kms" {
-  source                    = "github.com/Coalfire-CF/ACE-AWS-KMS?ref=vX.X.X"
-  resource_prefix = var.resource_prefix
-  kms_key_resource_type = "s3"
-  key_policy = data.aws_iam_policy_document.s3_kms_policy.json
-}
 
-#this should be created where the module is called within the project. such as in region-setup or account setup if desired.
+
 data "aws_iam_policy_document" "s3_kms_policy" {
   statement {
-    sid       = "source-account-full-access"
-    effect    = "Allow"
+    effect = "Allow"
+    principals {
+      type = "AWS"
+      identifiers = ["arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
     actions   = ["kms:*"]
     resources = ["*"]
-    principals {
-      type        = "AWS"
-      identifiers = ["arn:aws:iam::${var.mgmt_account_id}:root"]
-    }
   }
-  statement {
-    sid    = "target-account-allow-grant"
-    effect = "Allow"
-    # the following actions are required by Terraform to read/create/remove grants
-    actions = [
-      "kms:CreateGrant",
-      "kms:DescribeKey",
-      "kms:ListGrants",
-      "kms:RevokeGrant"
-    ]
-    resources = ["*"]
-    # This allows any IAM role in the target account that has permission to create the grant to create the grant.
-    # Can lock this down to a specific account in the target account so only that role is able to create grant for this key
-    principals {
-      type        = "AWS"
-      identifiers = ["arn:aws:iam::${var.app_account_id}:root"]
-    }
-  }
-       
-  # Resource to be called where KMS access is required by a resource/service deployment
-  resource "aws_kms_grant" "cross-account-grant" {
-  name              = "grant-s3-kms-key"
-  key_id            = module.kms.arn # key above that was deployed
-  grantee_principal = data.aws_iam_role.my_role.arn #cross-account role or resource/service role you want to grant to 
-  operations        = ["Encrypt", "Decrypt", "GenerateDataKey"]
-}
-        
 }
 
+module "s3_kms_key" {
+  source = "https://github.com/Coalfire-CF/terraform-aws-kms/releases/tag/[latest-version]"
 
+  resource_prefix       = var.resource_prefix
+  kms_key_resource_type = "s3"
+  key_policy            = data.aws_iam_policy_document.s3_kms_policy.json
+
+  tags = {
+      Environment = "govcloud sandbox"
+      Owner       = "aws native architecture team"
+      Project     = "Pak Party"
+  }
+}
 ```
+
+
+## Post Deployment Configuration
+
+No post deployment configuration is neccessary.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -141,17 +198,15 @@ No modules.
 
 ## Contributing
 
-[Relative or absolute link to contributing.md](CONTRIBUTING.md)
-
+[Start Here](CONTRIBUTING.md)
 
 ## License
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/license/mit/)
 
+## Contact Us
 
-## Coalfire Pages
-
-[Absolute link to any relevant Coalfire Pages](https://coalfire.com/)
+[Coalfire](https://coalfire.com/)
 
 ### Copyright
 

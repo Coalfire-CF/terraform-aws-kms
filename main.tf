@@ -3,6 +3,9 @@ resource "aws_kms_key" "kms_key" {
   policy              = var.key_policy
   multi_region        = var.multi_region
   enable_key_rotation = true
+
+  tags = local.internal_tags
+
 }
 
 resource "aws_kms_alias" "kms_key_alias" {
