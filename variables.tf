@@ -24,3 +24,9 @@ variable "multi_region" {
   type        = bool
   default     = false
 }
+
+variable "tags" {
+  type        = map(any)
+  default     = {}
+  description = "Additional tags (e.g. map(`BusinessUnit`,`XYZ`)."
+}
