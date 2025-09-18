@@ -16,7 +16,7 @@ FedRAMP Compliance: Moderate, High
 Internal Modules:
 No prerequisite modules are required to deploy this module.
 
-AWS Provider 5.0+
+AWS Provider 6.0+
 IAM permissions to create and manage KMS resources.
 
 ## Resource List
