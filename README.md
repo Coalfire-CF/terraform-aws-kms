@@ -202,7 +202,6 @@ Copyright © 2023 Coalfire Systems Inc.
 .
 |-- CONTRIBUTING.md
 |-- LICENSE
-|-- License.md
 |-- README.md
 |-- coalfire_logo.png
 |-- locals.tf
@@ -210,6 +209,5 @@ Copyright © 2023 Coalfire Systems Inc.
 |-- outputs.tf
 |-- providers.tf
 |-- release-please-config.json
-|-- update-readme-tree.sh
 |-- variables.tf
 ```
