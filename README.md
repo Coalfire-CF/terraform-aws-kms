@@ -200,6 +200,7 @@ Copyright © 2023 Coalfire Systems Inc.
 ## Tree
 ```
 .
+|-- CHANGELOG.md
 |-- CONTRIBUTING.md
 |-- LICENSE
 |-- README.md
